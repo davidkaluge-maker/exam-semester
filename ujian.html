@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pengerjaan Kuis &amp; Ujian — EXAM-SEMESTER</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --ok-bg: #ecfdf5;
+      --ok-border: #6ee7b7;
+      --ok-text: #065f46;
+      --err-bg: #fef2f2;
+      --err-border: #fca5a5;
+      --err-text: #991b1b;
+      --warn-bg: #fffbeb;
+      --warn-border: #fcd34d;
+      --warn-text: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 720px;
+      margin: 12px auto;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      margin-bottom: 16px;
+    }
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .top-bar a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #eff6ff;
+      color: var(--primary);
+    }
+    .pill.seb {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    h1 { margin: 0 0 6px; font-size: 1.35rem; }
+    .subtitle { margin: 0 0 16px; color: var(--muted); font-size: 0.9rem; }
+    .form-group { margin-bottom: 14px; }
+    label.field-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    select, textarea, input[type="text"] {
+      width: 100%;
+      padding: 11px 13px;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+      font-family: inherit;
+    }
+    textarea { min-height: 150px; resize: vertical; }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .row > select { flex: 1; min-width: 220px; }
+    button.btn {
+      padding: 11px 16px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button.btn:hover { background: var(--primary-hover); }
+    button.btn.secondary {
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid var(--border);
+    }
+    button.btn.secondary:hover { background: #f8fafc; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .meta-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+    }
+    .hint { margin-top: 5px; font-size: 0.8rem; color: var(--muted); }
+    #banner {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+      border: 1px solid transparent;
+    }
+    #banner.ok { display: block; background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
+    #banner.err { display: block; background: var(--err-bg); border-color: var(--err-border); color: var(--err-text); }
+    #banner.warn { display: block; background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="card">
+      <div class="top-bar">
+        <a href="/login.html">← Login</a>
+        <a href="/gradebook.html">Lihat Grade Book →</a>
+      </div>
+      <div><span class="badge">EXAM-SEMESTER • Ruang Ujian</span></div>
+      <h1>Pengerjaan Kuis &amp; Ujian Mahasiswa</h1>
+      <p class="subtitle">Pilih kelas dan aktivitas penilaian, verifikasi sesi bila diwajibkan SEB, lalu kirim jawaban.</p>
+
+      <div id="banner" role="status" aria-live="polite"></div>
+
+      <div class="form-group">
+        <label class="field-label" for="sectionSelect">Mata Kuliah &amp; Kelas Aktif</label>
+        <select id="sectionSelect">
+          <option value="">Memuat daftar kelas...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="field-label" for="activitySelect">Aktivitas (Kuis / Tugas / UTS / Proyek / UAS)</label>
+        <div class="row">
+          <select id="activitySelect">
+            <option value="">Pilih kelas terlebih dahulu...</option>
+          </select>
+          <button id="verifySebBtn" class="btn secondary" type="button" disabled>Cek Sesi SEB</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="examCard" class="card" style="display:none;">
+      <div id="activityMeta" class="meta-box"></div>
+
+      <form id="examForm">
+        <div class="form-group">
+          <label class="field-label" for="answerText">Jawaban Anda</label>
+          <textarea
+            id="answerText"
+            required
+            placeholder="Tuliskan uraian jawaban, langkah penyelesaian, atau tautan/kode sesuai instruksi aktivitas..."
+          ></textarea>
+          <div class="hint">Jawaban dikirim sebagai payload terstruktur ke server dan dicatat dalam riwayat pengumpulan.</div>
+        </div>
+
+        <button id="submitBtn" class="btn" type="submit" style="width:100%;">Kumpulkan Jawaban</button>
+      </form>
+    </section>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const banner = document.getElementById("banner");
+    const sectionSelect = document.getElementById("sectionSelect");
+    const activitySelect = document.getElementById("activitySelect");
+    const verifySebBtn = document.getElementById("verifySebBtn");
+    const examCard = document.getElementById("examCard");
+    const activityMeta = document.getElementById("activityMeta");
+    const examForm = document.getElementById("examForm");
+    const answerText = document.getElementById("answerText");
+    const submitBtn = document.getElementById("submitBtn");
+
+    let accessToken = null;
+    let currentActivities = [];
+    let selectedActivity = null;
+    let sebReadyForSelected = true;
+
+    function showBanner(text, type = "ok") {
+      banner.textContent = text;
+      banner.className = type;
+    }
+
+    function setExamFormEnabled(enabled, reasonText = "") {
+      answerText.disabled = !enabled;
+      submitBtn.disabled = !enabled;
+      if (!enabled && reasonText) {
+        showBanner(reasonText, "err");
+      }
+    }
+
+    async function checkSebForActivity(activity) {
+      if (!activity) return false;
+      if (!activity.require_seb) {
+        sebReadyForSelected = true;
+        setExamFormEnabled(true);
+        return true;
+      }
+
+      verifySebBtn.disabled = true;
+      verifySebBtn.textContent = "Memverifikasi SEB...";
+
+      try {
+        const res = await fetch(
+          `/.netlify/functions/verify-seb?activity_id=${encodeURIComponent(activity.activity_id)}`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }
+        );
+        const data = await res.json();
+
+        if (!res.ok || !data.ok || !data.seb_verified) {
+          sebReadyForSelected = false;
+          setExamFormEnabled(
+            false,
+            data.message ||
+              `Akses ujian tertutup ditolak (${data.reason || "SEB_REQUIRED"}). Buka halaman ini melalui Safe Exam Browser (SEB) resmi.`
+          );
+          return false;
+        }
+
+        sebReadyForSelected = true;
+        setExamFormEnabled(true);
+        showBanner("Sesi Safe Exam Browser (SEB) terverifikasi resmi. Anda dapat mengerjakan dan mengirim jawaban.", "ok");
+        return true;
+      } catch (err) {
+        sebReadyForSelected = false;
+        setExamFormEnabled(false, "Gagal memverifikasi sesi SEB: " + err.message);
+        return false;
+      } finally {
+        verifySebBtn.disabled = false;
+        verifySebBtn.textContent = "Cek Sesi SEB";
+      }
+    }
+
+    function onActivityChange() {
+      const actId = activitySelect.value;
+      selectedActivity = currentActivities.find((a) => a.activity_id === actId) || null;
+
+      if (!selectedActivity) {
+        examCard.style.display = "none";
+        verifySebBtn.disabled = true;
+        return;
+      }
+
+      examCard.style.display = "block";
+      verifySebBtn.disabled = false;
+
+      const sebBadge = selectedActivity.require_seb
+        ? '<span class="pill seb">Wajib Safe Exam Browser (SEB)</span>'
+        : '<span class="pill">Browser Standar Diizinkan</span>';
+
+      const deadlineText = selectedActivity.end_time
+        ? new Date(selectedActivity.end_time).toLocaleString("id-ID")
+        : "Tidak dibatasi";
+
+      activityMeta.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:6px;">
+          <strong>${selectedActivity.title}</strong>
+          ${sebBadge}
+        </div>
+        <div style="color:#475569;font-size:0.84rem;margin-bottom:8px;">
+          Jenis: <strong>${selectedActivity.activity_type}</strong> • Skor Maks: <strong>${selectedActivity.max_score}</strong> • Batas Akhir: <strong>${deadlineText}</strong>
+        </div>
+        <div>${selectedActivity.instructions ? selectedActivity.instructions.replace(/\n/g, "<br>") : "<em>Kerjakan sesuai rubrik dan petunjuk pengajar.</em>"}</div>
+      `;
+
+      checkSebForActivity(selectedActivity);
+    }
+
+    async function loadActivitiesForSection(sectionId) {
+      selectedActivity = null;
+      examCard.style.display = "none";
+      verifySebBtn.disabled = true;
+      activitySelect.innerHTML = '<option value="">Memuat aktivitas...</option>';
+
+      if (!sectionId || !accessToken) return;
+
+      try {
+        const res = await fetch(`/.netlify/functions/activities?section_id=${encodeURIComponent(sectionId)}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal memuat aktivitas.");
+
+        currentActivities = data.activities || [];
+        if (currentActivities.length === 0) {
+          activitySelect.innerHTML = '<option value="">Belum ada aktivitas dipublikasikan pada kelas ini</option>';
+          return;
+        }
+
+        activitySelect.innerHTML =
+          '<option value="">-- Pilih Aktivitas Kuis / Ujian --</option>' +
+          currentActivities
+            .map(
+              (a) =>
+                `<option value="${a.activity_id}">${a.title} [${a.activity_type}${a.require_seb ? " • SEB" : ""}]</option>`
+            )
+            .join("");
+      } catch (err) {
+        activitySelect.innerHTML = '<option value="">Gagal memuat aktivitas</option>';
+        showBanner(err.message, "err");
+      }
+    }
+
+    sectionSelect.addEventListener("change", () => {
+      loadActivitiesForSection(sectionSelect.value);
+    });
+
+    activitySelect.addEventListener("change

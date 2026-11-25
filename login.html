@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Mahasiswa &amp; Dosen — EXAM-SEMESTER</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --ok-bg: #ecfdf5;
+      --ok-border: #6ee7b7;
+      --ok-text: #065f46;
+      --err-bg: #fef2f2;
+      --err-border: #fca5a5;
+      --err-text: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .card {
+      max-width: 460px;
+      margin: 20px auto;
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    h1 { margin: 0 0 6px; font-size: 1.35rem; }
+    .subtitle { margin: 0 0 18px; color: var(--muted); font-size: 0.9rem; }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .tab-btn {
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 600;
+      border-radius: 9px;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #eff6ff;
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      padding: 11px 13px;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+    button.submit-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button.submit-btn:hover { background: var(--primary-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .links {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.86rem;
+    }
+    .links a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    #msg {
+      display: none;
+      margin-top: 14px;
+      padding: 11px 13px;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      border: 1px solid transparent;
+    }
+    #msg.ok { display: block; background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
+    #msg.err { display: block; background: var(--err-bg); border-color: var(--err-border); color: var(--err-text); }
+    #sessionBox {
+      display: none;
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #f8fafc;
+      font-size: 0.88rem;
+    }
+    .logout-btn {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">EXAM-SEMESTER • Autentikasi</span>
+    <h1>Masuk ke Sistem</h1>
+    <p class="subtitle">Gunakan akun terdaftar untuk mengakses aktivitas, penilaian, dan Grade Book.</p>
+
+    <div class="tabs" role="tablist">
+      <button id="tabStudent" class="tab-btn active" type="button" role="tab">Login Mahasiswa</button>
+      <button id="tabLecturer" class="tab-btn" type="button" role="tab">Login Dosen / Admin</button>
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" required autocomplete="email" placeholder="nama@kampus.ac.id" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Kata Sandi</label>
+        <input id="password" type="password" required autocomplete="current-password" placeholder="••••••••" />
+      </div>
+
+      <button id="loginBtn" class="submit-btn" type="submit">Masuk</button>
+    </form>
+
+    <div class="links">
+      <a href="/preregistrasi.html">Pra-Registrasi Mahasiswa</a>
+      <button id="resetPwdBtn" type="button" style="background:none;border:none;color:#1e40af;font-weight:600;cursor:pointer;padding:0;">
+        Lupa kata sandi?
+      </button>
+    </div>
+
+    <div id="msg" role="status" aria-live="polite"></div>
+
+    <section id="sessionBox">
+      <div><strong>Sesi Aktif:</strong> <span id="sessName"></span> (<span id="sessRole"></span>)</div>
+      <div id="sessIdentity" style="color:#475569;margin-top:4px;"></div>
+      <div id="sessSections" style="margin-top:8px;"></div>
+      <button id="logoutBtn" class="logout-btn" type="button">Keluar (Logout)</button>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const tabStudent = document.getElementById("tabStudent");
+    const tabLecturer = document.getElementById("tabLecturer");
+    const loginForm = document.getElementById("loginForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const resetPwdBtn = document.getElementById("resetPwdBtn");
+    const msgBox = document.getElementById("msg");
+    const sessionBox = document.getElementById("sessionBox");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    let intendedRole = "student";
+    let supabase = null;
+
+    function showMsg(text, isError = false) {
+      msgBox.textContent = text;
+      msgBox.className = isError ? "err" : "ok";
+    }
+
+    function setRoleTab(role) {
+      intendedRole = role;
+      tabStudent.classList.toggle("active", role === "student");
+      tabLecturer.classList.toggle("active", role === "lecturer");
+    }
+
+    tabStudent.addEventListener("click", () => setRoleTab("student"));
+    tabLecturer.addEventListener("click", () => setRoleTab("lecturer"));
+
+    async function loadProfile(session) {
+      if (!session?.access_token) {
+        sessionBox.style.display = "none";
+        return;
+      }
+
+      const res = await fetch("/.netlify/functions/me", {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showMsg(data.message || "Gagal memuat profil sesi.", true);
+        return;
+      }
+
+      if (intendedRole === "student" && data.user.role !== "student") {
+        showMsg(`Akun ini terdaftar sebagai ${data.user.role}. Gunakan tab Login Dosen / Admin.`, true);
+      }
+
+      sessionBox.style.display = "block";
+      document.getElementById("sessName").textContent = data.user.full_name;
+      document.getElementById("sessRole").textContent = data.user.role.toUpperCase();
+      document.getElementById("sessIdentity").textContent = data.user.nim
+        ? `NIM: ${data.user.nim} • ID Singkat: ${String(data.user.student_id).slice(0, 8)}`
+        : `Email: ${data.user.email}`;
+
+      const secList = (data.sections || [])
+        .map((s) => `• ${s.course_code} ${s.course_name} (${s.class_code} / ${s.semester_code})`)
+        .join("<br>");
+      document.getElementById("sessSections").innerHTML =
+        secList || "<em>Belum ada kelas aktif yang terhubung.</em>";
+    }
+
+    async function init() {
+      try {
+        const cfgRes = await fetch("/.netlify/functions/public-config");
+        const cfg = await cfgRes.json();
+        if (!cfgRes.ok) throw new Error(cfg.message || "Gagal memuat konfigurasi.");
+
+        supabase = createClient(cfg.supabase_url, cfg.supabase_anon_key);
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) {
+          await loadProfile(data.session);
+        }
+      } catch (err) {
+        showMsg("Inisialisasi login gagal: " + err.message, true);
+      }
+    }
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!supabase) return;
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Memeriksa...";
+      msgBox.className = "";
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        document.getElementById("password").value = "";
+        showMsg("Login berhasil. Memuat data hak akses...");
+        await loadProfile(data.session);
+      } catch (err) {
+        showMsg("Login gagal: " + err.message, true);
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Masuk";
+      }
+    });
+
+    resetPwdBtn.addEventListener("click", async () => {
+      if (!supabase) return;
+      const email = document.getElementById("email").value.trim();
+      if (!email) {
+        showMsg("Masukkan alamat email terlebih dahulu untuk mengirim tautan pemulihan kata sandi.", true);
+        return;
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login.html`
+      });
+      if (error) {
+        showMsg("Gagal mengirim tautan pemulihan: " + error.message, true);
+      } else {
+        showMsg("Tautan pemulihan kata sandi telah dikirim ke email Anda.");
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      if (!supabase) return;
+      await supabase.auth.signOut();
+      sessionBox.style.display = "none";
+      showMsg("Anda telah keluar dari sesi.");
+    });
+
+    init();
+  </script>
+</body>
+</html>

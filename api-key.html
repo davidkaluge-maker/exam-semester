@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelola Gemini API Key — EXAM-SEMESTER</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --ok-bg: #ecfdf5;
+      --ok-border: #6ee7b7;
+      --ok-text: #065f46;
+      --err-bg: #fef2f2;
+      --err-border: #fca5a5;
+      --err-text: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .card {
+      max-width: 520px;
+      margin: 14px auto;
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    h1 { margin: 0 0 6px; font-size: 1.35rem; }
+    .subtitle { margin: 0 0 16px; color: var(--muted); font-size: 0.9rem; }
+    .status-panel {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 0.88rem;
+    }
+    .form-group { margin-bottom: 14px; }
+    label.field-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+    input[type="password"] {
+      width: 100%;
+      padding: 11px 13px;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+    .hint { margin-top: 5px; font-size: 0.8rem; color: var(--muted); }
+    .checkbox-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      background: #f8fafc;
+      margin-bottom: 12px;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+    .checkbox-box input { width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; }
+    button.submit-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button.submit-btn:hover { background: var(--primary-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #msg {
+      display: none;
+      margin-top: 14px;
+      padding: 11px 13px;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      border: 1px solid transparent;
+    }
+    #msg.ok { display: block; background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
+    #msg.err { display: block; background: var(--err-bg); border-color: var(--err-border); color: var(--err-text); }
+    .top-link { display: inline-block; margin-bottom: 12px; font-size: 0.86rem; color: var(--primary); font-weight: 600; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <a class="top-link" href="/login.html">← Kembali ke Halaman Login</a>
+    <div><span class="badge">EXAM-SEMESTER • Gemini API Key</span></div>
+    <h1>Kelola / Ganti Gemini API Key</h1>
+    <p class="subtitle">
+      Mengganti atau menonaktifkan API Key tidak mengubah NIM, identitas mahasiswa, maupun nilai yang sudah ada.
+    </p>
+
+    <section class="status-panel" id="currentStatus">
+      Memeriksa sesi login...
+    </section>
+
+    <form id="keyForm">
+      <div class="form-group">
+        <label class="field-label" for="newApiKey">Gemini API Key Baru</label>
+        <input id="newApiKey" type="password" autocomplete="off" placeholder="AIzaSy..." />
+        <div class="hint">Gunakan kunci dari proyek pribadi Anda agar kuota gratis terpisah.</div>
+      </div>
+
+      <label class="checkbox-box" for="optOut">
+        <input id="optOut" type="checkbox" />
+        <span>Nonaktifkan API Key pribadi / gunakan jalur penilaian alternatif/manual.</span>
+      </label>
+
+      <label class="checkbox-box" for="consent">
+        <input id="consent" type="checkbox" />
+        <span>Saya menyetujui API Key baru dienkripsi dan dipakai backend untuk membantu penilaian sesuai rubrik.</span>
+      </label>
+
+      <button id="saveBtn" class="submit-btn" type="submit">Simpan Perubahan API Key</button>
+    </form>
+
+    <div id="msg" role="status" aria-live="polite"></div>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const statusPanel = document.getElementById("currentStatus");
+    const keyForm = document.getElementById("keyForm");
+    const newApiKeyInput = document.getElementById("newApiKey");
+    const optOutCheckbox = document.getElementById("optOut");
+    const consentCheckbox = document.getElementById("consent");
+    const saveBtn = document.getElementById("saveBtn");
+    const msgBox = document.getElementById("msg");
+
+    let supabase = null;
+    let currentToken = null;
+
+    function showMsg(text, isError = false) {
+      msgBox.textContent = text;
+      msgBox.className = isError ? "err" : "ok";
+    }
+
+    async function refreshStatus() {
+      const { data } = await supabase.auth.getSession();
+      if (!data?.session?.access_token) {
+        statusPanel.innerHTML =
+          'Anda belum login. Silakan <a href="/login.html" style="color:#1e40af;font-weight:700;">login terlebih dahulu</a>.';
+        saveBtn.disabled = true;
+        return;
+      }
+
+      currentToken = data.session.access_token;
+      const res = await fetch("/.netlify/functions/me", {
+        headers: { Authorization: `Bearer ${currentToken}` }
+      });
+      const me = await res.json();
+      if (!res.ok) {
+        statusPanel.textContent = me.message || "Gagal memuat status API key.";
+        saveBtn.disabled = true;
+        return;
+      }
+
+      const meta = me.api_key_meta || {};
+      statusPanel.innerHTML = `
+        <div><strong>Mahasiswa:</strong> ${me.user.full_name} (${me.user.nim || "-"})</div>
+        <div><strong>Status API Key:</strong> ${meta.validation_status || "unverified"}</div>
+        <div><strong>Petunjuk Kunci:</strong> ${meta.key_hint ? "••••" + meta.key_hint : "Tidak tersimpan"}</div>
+      `;
+      saveBtn.disabled = false;
+    }
+
+    optOutCheckbox.addEventListener("change", () => {
+      if (optOutCheckbox.checked) {
+        newApiKeyInput.value = "";
+        newApiKeyInput.disabled = true;
+        consentCheckbox.checked = false;
+        consentCheckbox.disabled = true;
+      } else {
+        newApiKeyInput.disabled = false;
+        consentCheckbox.disabled = false;
+      }
+    });
+
+    keyForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentToken) return;
+
+      const gemini_api_key = newApiKeyInput.value.trim();
+      const opted_out = optOutCheckbox.checked;
+      const consent_given = consentCheckbox.checked;
+
+      if (!opted_out && gemini_api_key && !consent_given) {
+        showMsg("Centang persetujuan penggunaan API Key atau pilih opsi nonaktifkan/alternatif.", true);
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Memvalidasi & Menyimpan...";
+      msgBox.className = "";
+
+      try {
+        const res = await fetch("/.netlify/functions/manage-api-key", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentToken}`
+          },
+          body: JSON.stringify({
+            gemini_api_key: opted_out ? null : gemini_api_key,
+            consent_given: !opted_out && Boolean(gemini_api_key) && consent_given,
+            opted_out
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal menyimpan API key.");
+
+        newApiKeyInput.value = "";
+        showMsg(
+          `Perubahan tersimpan. Status: ${data.validation_status}${data.key_hint ? ` (${data.key_hint})` : ""}.`
+        );
+        await refreshStatus();
+      } catch (err) {
+        showMsg(err.message, true);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Simpan Perubahan API Key";
+      }
+    });
+
+    (async () => {
+      try {
+        const cfgRes = await fetch("/.netlify/functions/public-config");
+        const cfg = await cfgRes.json();
+        if (!cfgRes.ok) throw new Error(cfg.message || "Gagal memuat konfigurasi.");
+        supabase = createClient(cfg.supabase_url, cfg.supabase_anon_key);
+        await refreshStatus();
+      } catch (err) {
+        statusPanel.textContent = "Error: " + err.message;
+      }
+    })();
+  </script>
+</body>
+</html>

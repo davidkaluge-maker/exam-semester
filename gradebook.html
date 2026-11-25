@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grade Book &amp; Rekap Nilai — EXAM-SEMESTER</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --ok-bg: #ecfdf5;
+      --ok-border: #6ee7b7;
+      --ok-text: #065f46;
+      --err-bg: #fef2f2;
+      --err-border: #fca5a5;
+      --err-text: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 920px;
+      margin: 12px auto;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      margin-bottom: 16px;
+    }
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .top-bar a { color: var(--primary); font-weight: 600; text-decoration: none; font-size: 0.9rem; }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+    h1 { margin: 0 0 6px; font-size: 1.35rem; }
+    .subtitle { margin: 0 0 16px; color: var(--muted); font-size: 0.9rem; }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    select, input {
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+    }
+    select { min-width: 240px; flex: 1; }
+    button.btn {
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+    }
+    button.btn:hover { background: var(--primary-hover); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+    .kpi {
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .kpi .label { font-size: 0.8rem; color: var(--muted); }
+    .kpi .val { font-size: 1.35rem; font-weight: 800; margin-top: 2px; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      white-space: nowrap;
+    }
+    th { background: #f8fafc; font-weight: 700; color: var(--muted); }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      background: #eff6ff;
+      color: var(--primary);
+    }
+    #msg {
+      display: none;
+      padding: 11px 13px;
+      border-radius: 9px;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+      border: 1px solid transparent;
+    }
+    #msg.ok { display: block; background: var(--ok-bg); border-color: var(--ok-border); color: var(--ok-text); }
+    #msg.err { display: block; background: var(--err-bg); border-color: var(--err-border); color: var(--err-text); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="card">
+      <div class="top-bar">
+        <a href="/login.html">← Kembali ke Login</a>
+        <span id="userBadge" class="pill">Memeriksa sesi...</span>
+      </div>
+      <span class="badge">EXAM-SEMESTER • Grade Book</span>
+      <h1>Grade Book &amp; Rekapitulasi Nilai Semester</h1>
+      <p class="subtitle">Menghitung nilai kuis, tugas, UTS, proyek, dan UAS secara terpadu sesuai bobot kelas.</p>
+
+      <div id="msg" role="status" aria-live="polite"></div>
+
+      <div class="row">
+        <select id="sectionSelect">
+          <option value="">Memuat daftar kelas...</option>
+        </select>
+        <button id="loadBtn" class="btn" type="button">Muat Grade Book</button>
+      </div>
+    </section>
+
+    <section id="studentView" class="card" style="display:none;"></section>
+    <section id="lecturerView" class="card" style="display:none;"></section>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const userBadge = document.getElementById("userBadge");
+    const sectionSelect = document.getElementById("sectionSelect");
+    const loadBtn = document.getElementById("loadBtn");
+    const msgBox = document.getElementById("msg");
+    const studentView = document.getElementById("studentView");
+    const lecturerView = document.getElementById("lecturerView");
+
+    let currentToken = null;
+    let currentRole = null;
+
+    function showMsg(text, isError = false) {
+      msgBox.textContent = text;
+      msgBox.className = isError ? "err" : "ok";
+    }
+
+    function renderStudentView(data) {
+      lecturerView.style.display = "none";
+      studentView.style.display = "block";
+      const s = data.student_summary;
+
+      const rowsHtml = (s.items || [])
+        .map(
+          (it) => `
+          <tr>
+            <td>${it.title}</td>
+            <td><span class="pill">${it.activity_type}</span></td>
+            <td>${it.score !== null ? `${it.score} / ${it.max_score}` : "-"}</td>
+            <td>${it.normalized_percentage !== null ? `${it.normalized_percentage}%` : "-"}</td>
+            <td>${it.score_status}</td>
+            <td>${it.graded_by || "-"}</td>
+            <td>${it.lecturer_notes || "-"}</td>
+          </tr>`
+        )
+        .join("");
+
+      studentView.innerHTML = `
+        <h2>Rekap Nilai Saya — ${data.section.course_code} ${data.section.course_name} (${data.section.class_code})</h2>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="label">Nilai Akhir</div><div class="val">${s.final_score !== null ? s.final_score : "-"}</div></div>
+          <div class="kpi"><div class="label">Huruf Mutu</div><div class="val">${s.letter_grade}</div></div>
+          <div class="kpi"><div class="label">Aktivitas Dinilai</div><div class="val">${s.graded_activities_count} / ${s.total_activities_count}</div></div>
+          <div class="kpi"><div class="label">Total Bobot Aktif</div><div class="val">${s.active_weight_total}%</div></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Aktivitas</th>
+                <th>Jenis</th>
+                <th>Skor</th>
+                <th>Persentase</th>
+                <th>Status</th>
+                <th>Penilai</th>
+                <th>Catatan Dosen</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml || '<tr><td colspan="7">Belum ada aktivitas penilaian.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderLecturerView(data) {
+      studentView.style.display = "none";
+      lecturerView.style.display = "block";
+
+      const actOptions = (data.activities || [])
+        .map((a) => `<option value="${a.activity_id}">${a.title} (${a.activity_type}, max ${a.max_score})</option>`)
+        .join("");
+
+      const stuOptions = (data.students || [])
+        .map((st) => `<option value="${st.student_id}">${st.nim} — ${st.full_name}</option>`)
+        .join("");
+
+      const rowsHtml = (data.students || [])
+        .map(
+          (st) => `
+          <tr>
+            <td>${st.nim}</td>
+            <td>${st.full_name}</td>
+            <td><strong>${st.final_score !== null ? st.final_score : "-"}</strong></td>
+            <td><span class="pill">${st.letter_grade}</span></td>
+            <td>${st.graded_activities_count} / ${st.total_activities_count}</td>
+          </tr>`
+        )
+        .join("");
+
+      lecturerView.innerHTML = `
+        <h2>Grade Book Kelas — ${data.section.course_code} ${data.section.course_name} (${data.section.class_code})</h2>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="label">Rata-rata Kelas</div><div class="val">${data.class_average !== null ? data.class_average : "-"}</div></div>
+          <div class="kpi"><div class="label">Mahasiswa Terdaftar</div><div class="val">${data.total_students}</div></div>
+          <div class="kpi"><div class="label">Jumlah Aktivitas</div><div class="val">${(data.activities || []).length}</div></div>
+        </div>
+
+        <form id="manualGradeForm" class="row" style="margin-bottom:16px;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+          <select id="mgStudent">${stuOptions || '<option value="">Tidak ada mahasiswa</option>'}</select>
+          <select id="mgActivity">${actOptions || '<option value="">Tidak ada aktivitas</option>'}</select>
+          <input id="mgScore" type="number" step="0.01" min="0" placeholder="Skor (mis. 85)" style="width:130px;" required />
+          <input id="mgNotes" type="text" placeholder="Catatan dosen (opsional)" style="flex:1;min-width:160px;" />
+          <button class="btn" type="submit">Simpan / Koreksi Nilai</button>
+        </form>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>NIM</th>
+                <th>Nama Mahasiswa</th>
+                <th>Nilai Akhir</th>
+                <th>Huruf</th>
+                <th>Aktivitas Dinilai</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml || '<tr><td colspan="5">Belum ada mahasiswa terdaftar.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+
+      const mgForm = document.getElementById("manualGradeForm");
+      mgForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const student_id = document.getElementById("mgStudent").value;
+        const activity_id = document.getElementById("mgActivity").value;
+        const score = Number(document.getElementById("mgScore").value);
+        const lecturer_notes = document.getElementById("mgNotes").value.trim();
+
+        const res = await fetch("/.netlify/functions/review-grade", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentToken}`
+          },
+          body: JSON.stringify({
+            mode: "manual_grade",
+            student_id,
+            activity_id,
+            score,
+            score_status: "graded",
+            lecturer_notes: lecturer_notes || null
+          })
+        });
+        const out = await res.json();
+        if (!res.ok) {
+          showMsg(out.message || "Gagal menyimpan nilai.", true);
+        } else {
+          showMsg("Nilai tersimpan dan rekapitulasi diperbarui.");
+          await loadGradebook();
+        }
+      });
+    }
+
+    async function loadGradebook() {
+      const sectionId = sectionSelect.value;
+      if (!sectionId || !currentToken) return;
+
+      loadBtn.disabled = true;
+      msgBox.className = "";
+
+      try {
+        const res = await fetch(`/.netlify/functions/gradebook?section_id=${encodeURIComponent(sectionId)}`, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal memuat Grade Book.");
+
+        if (data.role === "student") {
+          renderStudentView(data);
+        } else {
+          renderLecturerView(data);
+        }
+      } catch (err) {
+        showMsg(err.message, true);
+      } finally {
+        loadBtn.disabled = false;
+      }
+    }
+
+    loadBtn.addEventListener("click", loadGradebook);
+
+    (async () => {
+      try {
+        const cfgRes = await fetch("/.netlify/functions/public-config");
+        const cfg = await cfgRes.json();
+        if (!cfgRes.ok) throw new Error(cfg.message || "Gagal memuat konfigurasi.");
+
+        const supabase = createClient(cfg.supabase_url, cfg.supabase_anon_key);
+        const { data } = await supabase.auth.getSession();
+        if (!data?.session?.access_token) {
+          userBadge.textContent = "Belum Login";
+          sectionSelect.innerHTML = '<option value="">Silakan login terlebih dahulu</option>';
+          loadBtn.disabled = true;
+          showMsg('Sesi login belum aktif. Buka halaman Login terlebih dahulu.', true);
+          return;
+        }
+
+        currentToken = data.session.access_token;
+        const meRes = await fetch("/.netlify/functions/me", {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        const me = await meRes.json();
+        if (!meRes.ok) throw new Error(me.message || "Gagal memuat profil.");
+
+        currentRole = me.user.role;
+        userBadge.textContent = `${me.user.full_name} (${currentRole.toUpperCase()})`;
+
+        const secs = me.sections || [];
+        if (secs.length === 0) {
+          sectionSelect.innerHTML = '<option value="">Belum ada kelas terhubung</option>';
+          loadBtn.disabled = true;
+          return;
+        }
+
+        sectionSelect.innerHTML = secs
+          .map(
+            (s) =>
+              `<option value="${s.section_id}">${s.course_code} — ${s.course_name} [${s.class_code} · ${s.semester_code}]</option>`
+          )
+          .join("");
+
+        await loadGradebook();
+      } catch (err) {
+        showMsg("Inisialisasi Grade Book gagal: " + err.message, true);
+        loadBtn.disabled = true;
+      }
+    })();
+  </script>
+</body>
+</html>
