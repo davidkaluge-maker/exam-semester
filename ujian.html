@@ -23,7 +23,7 @@
       --warn-border: #fcd34d;
       --warn-text: #92400e;
     }
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -153,8 +153,8 @@
   <div class="container">
     <section class="card">
       <div class="top-bar">
-        <a href="/login.html">← Login</a>
-        <a href="/gradebook.html">Lihat Grade Book →</a>
+        <a href="/login">← Login</a>
+        <a href="/gradebook">Lihat Grade Book →</a>
       </div>
       <div><span class="badge">EXAM-SEMESTER • Ruang Ujian</span></div>
       <h1>Pengerjaan Kuis &amp; Ujian Mahasiswa</h1>
@@ -200,8 +200,6 @@
   </div>
 
   <script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
     const banner = document.getElementById("banner");
     const sectionSelect = document.getElementById("sectionSelect");
     const activitySelect = document.getElementById("activitySelect");
@@ -213,6 +211,7 @@
     const submitBtn = document.getElementById("submitBtn");
 
     let accessToken = null;
+    let currentSections = [];
     let currentActivities = [];
     let selectedActivity = null;
     let sebReadyForSelected = true;
@@ -228,6 +227,14 @@
       if (!enabled && reasonText) {
         showBanner(reasonText, "err");
       }
+    }
+
+    function getAuthHeaders(extraHeaders = {}) {
+      const headers = { ...extraHeaders };
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
+      return headers;
     }
 
     async function checkSebForActivity(activity) {
@@ -246,7 +253,7 @@
           `/.netlify/functions/verify-seb?activity_id=${encodeURIComponent(activity.activity_id)}`,
           {
             method: "GET",
-            headers: { Authorization: `Bearer ${accessToken}` }
+            headers: getAuthHeaders()
           }
         );
         const data = await res.json();
@@ -312,15 +319,18 @@
 
     async function loadActivitiesForSection(sectionId) {
       selectedActivity = null;
+      currentActivities = [];
       examCard.style.display = "none";
       verifySebBtn.disabled = true;
-      activitySelect.innerHTML = '<option value="">Memuat aktivitas...</option>';
+      activitySelect.innerHTML = '<option value="">Pilih kelas terlebih dahulu...</option>';
 
-      if (!sectionId || !accessToken) return;
+      if (!sectionId) return;
+
+      activitySelect.innerHTML = '<option value="">Memuat aktivitas...</option>';
 
       try {
         const res = await fetch(`/.netlify/functions/activities?section_id=${encodeURIComponent(sectionId)}`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          headers: getAuthHeaders()
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Gagal memuat aktivitas.");
@@ -345,8 +355,115 @@
       }
     }
 
+    async function loadActiveSections() {
+      sectionSelect.innerHTML = '<option value="">Memuat daftar kelas...</option>';
+      activitySelect.innerHTML = '<option value="">Pilih kelas terlebih dahulu...</option>';
+
+      try {
+        const res = await fetch("/.netlify/functions/prereg-options", {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal memuat daftar kelas.");
+
+        currentSections = data.sections || [];
+        if (currentSections.length === 0) {
+          sectionSelect.innerHTML = '<option value="">Belum ada kelas aktif tersedia</option>';
+          return;
+        }
+
+        sectionSelect.innerHTML = '<option value="">-- Pilih Mata Kuliah & Kelas --</option>';
+        for (const sec of currentSections) {
+          const opt = document.createElement("option");
+          opt.value = sec.section_id;
+          opt.textContent = `${sec.course_code} — ${sec.course_name} [${sec.class_code} · ${sec.class_type}]`;
+          sectionSelect.appendChild(opt);
+        }
+      } catch (err) {
+        sectionSelect.innerHTML = '<option value="">Gagal memuat daftar kelas</option>';
+        showBanner("Gagal memuat daftar kelas: " + err.message, "err");
+      }
+    }
+
+    async function initSessionAndData() {
+      try {
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith("sb-") && key.endsWith("-auth-token")) {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              accessToken = parsed?.access_token || parsed?.currentSession?.access_token || null;
+              if (accessToken) break;
+            }
+          }
+        }
+      } catch (_) {
+        accessToken = null;
+      }
+
+      if (!accessToken) {
+        showBanner("Anda belum memiliki sesi login aktif. Beberapa aktivitas privat mungkin memerlukan login terlebih dahulu.", "warn");
+      }
+
+      await loadActiveSections();
+    }
+
     sectionSelect.addEventListener("change", () => {
       loadActivitiesForSection(sectionSelect.value);
     });
 
-    activitySelect.addEventListener("change
+    activitySelect.addEventListener("change", onActivityChange);
+
+    verifySebBtn.addEventListener("click", () => {
+      if (selectedActivity) {
+        checkSebForActivity(selectedActivity);
+      }
+    });
+
+    examForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!selectedActivity) {
+        showBanner("Pilih aktivitas terlebih dahulu.", "err");
+        return;
+      }
+      if (!sebReadyForSelected) {
+        showBanner("Verifikasi SEB belum lolos untuk aktivitas ini.", "err");
+        return;
+      }
+
+      const answer_text = answerText.value.trim();
+      if (!answer_text) {
+        showBanner("Jawaban tidak boleh kosong.", "err");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Mengumpulkan...";
+
+      try {
+        const res = await fetch("/.netlify/functions/submit-exam", {
+          method: "POST",
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({
+            activity_id: selectedActivity.activity_id,
+            section_id: sectionSelect.value,
+            answer_text
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal mengumpulkan jawaban.");
+
+        showBanner(data.message || "Jawaban berhasil dikumpulkan.", "ok");
+        answerText.value = "";
+      } catch (err) {
+        showBanner("Gagal mengumpulkan jawaban: " + err.message, "err");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Kumpulkan Jawaban";
+      }
+    });
+
+    initSessionAndData();
+  </script>
+</body>
+</html>
