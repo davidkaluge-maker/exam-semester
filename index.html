@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pra-Registrasi Mahasiswa — EXAM-SEMESTER</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --ok-bg: #ecfdf5;
+      --ok-border: #6ee7b7;
+      --ok-text: #065f46;
+      --err-bg: #fef2f2;
+      --err-border: #fca5a5;
+      --err-text: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .card {
+      max-width: 540px;
+      margin: 12px auto;
+      background: var(--card);
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+    }
+    .subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label.field-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 11px 13px;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+    }
+    input:focus, select:focus {
+      outline: 2px solid #93c5fd;
+      border-color: var(--primary);
+    }
+    .hint {
+      margin-top: 5px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .checkbox-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      background: #f8fafc;
+      margin-bottom: 12px;
+      font-size: 0.86rem;
+      cursor: pointer;
+    }
+    .checkbox-box input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    button[type="submit"] {
+      width: 100%;
+      padding: 13px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    button[type="submit"]:hover {
+      background: var(--primary-hover);
+    }
+    button[type="submit"]:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    #feedback {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      border: 1px solid transparent;
+    }
+    #feedback.ok {
+      display: block;
+      background: var(--ok-bg);
+      border-color: var(--ok-border);
+      color: var(--ok-text);
+    }
+    #feedback.err {
+      display: block;
+      background: var(--err-bg);
+      border-color: var(--err-border);
+      color: var(--err-text);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">EXAM-SEMESTER • Pra-Registrasi</span>
+    <h1>Pra-Registrasi Mahasiswa</h1>
+    <p class="subtitle">
+      Cukup dilakukan sekali di awal semester. Identitas Anda dipakai untuk kuis, tugas, UTS, proyek, dan UAS.
+    </p>
+
+    <form id="preregForm" novalidate>
+      <div class="form-group">
+        <label class="field-label" for="fullName">Nama Lengkap</label>
+        <input id="fullName" name="fullName" type="text" required placeholder="Contoh: Rina Pratama" />
+      </div>
+
+      <div class="form-group">
+        <label class="field-label" for="nim">NIM</label>
+        <input id="nim" name="nim" type="text" required placeholder="Contoh: 2301010045" />
+      </div>
+
+      <div class="form-group">
+        <label class="field-label" for="semesterSelect">Semester</label>
+        <select id="semesterSelect" name="semesterId" required>
+          <option value="">Memuat daftar semester...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="field-label" for="sectionSelect">Mata Kuliah &amp; Kelas</label>
+        <select id="sectionSelect" name="sectionId" required>
+          <option value="">Pilih semester terlebih dahulu...</option>
+        </select>
+        <div class="hint">Ingin mendaftar lebih dari satu kelas? Kirim form ini untuk tiap kelas dengan NIM yang sama.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="field-label" for="geminiApiKey">Gemini API Key Pribadi (Opsional)</label>
+        <input
+          id="geminiApiKey"
+          name="geminiApiKey"
+          type="password"
+          autocomplete="off"
+          placeholder="AIzaSy..."
+        />
+        <div class="hint">
+          Dienkripsi di server sebelum disimpan. Tidak pernah ditampilkan utuh kembali.
+        </div>
+      </div>
+
+      <label class="checkbox-box" for="optOutCheckbox">
+        <input id="optOutCheckbox" type="checkbox" />
+        <span>
+          Saya tidak memiliki atau tidak ingin menggunakan Gemini API Key pribadi (gunakan jalur penilaian alternatif/manual).
+        </span>
+      </label>
+
+      <label class="checkbox-box" for="consentCheckbox">
+        <input id="consentCheckbox" type="checkbox" />
+        <span>
+          Saya menyetujui API Key saya dienkripsi dan digunakan sistem backend untuk membantu penilaian sesuai rubrik.
+        </span>
+      </label>
+
+      <button id="submitBtn" type="submit">Simpan Pra-Registrasi</button>
+    </form>
+
+    <div id="feedback" role="status" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById("preregForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const feedback = document.getElementById("feedback");
+    const semesterSelect = document.getElementById("semesterSelect");
+    const sectionSelect = document.getElementById("sectionSelect");
+    const geminiApiKeyInput = document.getElementById("geminiApiKey");
+    const optOutCheckbox = document.getElementById("optOutCheckbox");
+    const consentCheckbox = document.getElementById("consentCheckbox");
+
+    let allSections = [];
+
+    function showMessage(msg, isError = false) {
+      feedback.textContent = msg;
+      feedback.className = isError ? "err" : "ok";
+    }
+
+    function renderSectionsForSemester(semesterId) {
+      sectionSelect.innerHTML = "";
+      const filtered = allSections.filter((s) => s.semester_id === semesterId);
+
+      if (!semesterId) {
+        sectionSelect.innerHTML = '<option value="">Pilih semester terlebih dahulu...</option>';
+        return;
+      }
+      if (filtered.length === 0) {
+        sectionSelect.innerHTML = '<option value="">Belum ada kelas pada semester ini</option>';
+        return;
+      }
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "-- Pilih Mata Kuliah & Kelas --";
+      sectionSelect.appendChild(placeholder);
+
+      for (const sec of filtered) {
+        const opt = document.createElement("option");
+        opt.value = sec.section_id;
+        opt.textContent = `${sec.course_code} — ${sec.course_name} [${sec.class_code} · ${sec.class_type}]`;
+        sectionSelect.appendChild(opt);
+      }
+    }
+
+    async function loadOptions() {
+      try {
+        const res = await fetch("/.netlify/functions/prereg-options");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal memuat data.");
+
+        allSections = data.sections || [];
+        semesterSelect.innerHTML = '<option value="">-- Pilih Semester --</option>';
+
+        for (const sem of data.semesters || []) {
+          const opt = document.createElement("option");
+          opt.value = sem.semester_id;
+          opt.textContent = `${sem.name} (${sem.code})${sem.is_active ? " • Aktif" : ""}`;
+          semesterSelect.appendChild(opt);
+        }
+
+        const activeSem = (data.semesters || []).find((s) => s.is_active);
+        if (activeSem) {
+          semesterSelect.value = activeSem.semester_id;
+          renderSectionsForSemester(activeSem.semester_id);
+        }
+      } catch (err) {
+        showMessage("Gagal memuat opsi: " + err.message, true);
+      }
+    }
+
+    semesterSelect.addEventListener("change", () => {
+      renderSectionsForSemester(semesterSelect.value);
+    });
+
+    optOutCheckbox.addEventListener("change", () => {
+      if (optOutCheckbox.checked) {
+        geminiApiKeyInput.value = "";
+        geminiApiKeyInput.disabled = true;
+        consentCheckbox.checked = false;
+        consentCheckbox.disabled = true;
+      } else {
+        geminiApiKeyInput.disabled = false;
+        consentCheckbox.disabled = false;
+      }
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      feedback.className = "";
+
+      const full_name = document.getElementById("fullName").value.trim();
+      const nim = document.getElementById("nim").value.trim();
+      const section_id = sectionSelect.value;
+      const gemini_api_key = geminiApiKeyInput.value.trim();
+      const opted_out = optOutCheckbox.checked;
+      const consent_given = consentCheckbox.checked;
+
+      if (!full_name || !nim || !section_id) {
+        showMessage("Lengkapi Nama Lengkap, NIM, dan Mata Kuliah & Kelas.", true);
+        return;
+      }
+
+      if (!opted_out && gemini_api_key && !consent_given) {
+        showMessage("Centang persetujuan penggunaan API Key atau pilih opsi tanpa API Key.", true);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Menyimpan...";
+
+      try {
+        const res = await fetch("/.netlify/functions/preregister", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name,
+            nim,
+            section_id,
+            gemini_api_key: opted_out ? null : (gemini_api_key || null),
+            consent_given: !opted_out && Boolean(gemini_api_key) && consent_given,
+            opted_out
+          })
+        });
+
+      const data = await res.json();
