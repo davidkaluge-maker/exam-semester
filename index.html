@@ -20,7 +20,7 @@
       --err-border: #fca5a5;
       --err-text: #991b1b;
     }
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -280,6 +280,7 @@
           renderSectionsForSemester(activeSem.semester_id);
         }
       } catch (err) {
+        semesterSelect.innerHTML = '<option value="">Gagal memuat daftar semester</option>';
         showMessage("Gagal memuat opsi: " + err.message, true);
       }
     }
@@ -338,4 +339,23 @@
           })
         });
 
-      const data = await res.json();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal menyimpan pra-registrasi.");
+
+        showMessage(data.message || "Pra-registrasi berhasil disimpan.", false);
+        form.reset();
+        geminiApiKeyInput.disabled = false;
+        consentCheckbox.disabled = false;
+        await loadOptions();
+      } catch (err) {
+        showMessage("Gagal menyimpan: " + err.message, true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Simpan Pra-Registrasi";
+      }
+    });
+
+    loadOptions();
+  </script>
+</body>
+</html>
